@@ -19,14 +19,16 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
+        run: npm install   # no cd, using root package.json
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Format frontend
+        run: npm run format
 
       - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
+        run: npm run build
 
   build-backend:
     runs-on: ubuntu-latest
@@ -47,6 +49,8 @@ jobs:
           python3 -m pip install --upgrade pip
           if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
 
-      - name: Run backend build / prepare artifacts
+      - name: Run backend lint / tests
         run: |
-          echo "Add backend build commands here if needed"
+          black --check backend ml
+          isort --check-only backend ml
+          flake8 backend ml
