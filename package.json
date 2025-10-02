@@ -15,6 +15,7 @@
   },
   "scripts": {
     "lint": "eslint 'frontend/**/*.{js,jsx}'",
-    "format": "prettier --write 'frontend/**/*.{js,jsx}'"
+    "format": "prettier --write 'frontend/**/*.{js,jsx}'",
+    "build": "react-scripts build"
   }
 }
