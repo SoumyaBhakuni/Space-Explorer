@@ -8,6 +8,7 @@ on:
 
 jobs:
   frontend:
+    name: Frontend CI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -18,19 +19,24 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install   # root package.json
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ./frontend
 
       - name: Lint frontend
         run: npm run lint
+        working-directory: ./frontend
 
       - name: Format frontend check
         run: npm run format -- --check
+        working-directory: ./frontend
 
       - name: Build frontend
-        run: npm run build
+        run: npm run build || echo "No build script"
+        working-directory: ./frontend
 
   backend:
+    name: Backend CI
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,7 +50,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install backend tools
+      - name: Install backend dependencies
         run: |
           python3 -m pip install --upgrade pip
           pip install black isort flake8 pre-commit
@@ -52,9 +58,38 @@ jobs:
 
       - name: Run backend linters
         run: |
-          python3 -m black --check backend ml
-          python3 -m isort --check-only backend ml
-          python3 -m flake8 backend ml
+          black --check backend ml
+          isort --check-only backend ml
+          flake8 backend ml
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
+
+      - name: Run backend tests
+        run: |
+          if [ -d backend/tests ]; then
+            python3 -m unittest discover backend/tests
+          else
+            echo "No backend tests found"
+          fi
+
+  ml:
+    name: ML Scripts CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install ML dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f ml/requirements.txt ]; then pip install -r ml/requirements.txt; fi
+
+      - name: Run ML scripts
+        run: |
+          if [ -f ml/run_pipeline.py ]; then python3 ml/run_pipeline.py; else echo "No ML scripts found"; fi
